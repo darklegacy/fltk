@@ -24,6 +24,7 @@
 #include <FL/Fl.H>
 #include <FL/x.H>
 #include <FL/Fl_Window.H>
+#include <FL/Fl_Image.H>
 #include <stdlib.h>
 #include "flstring.h"
 
@@ -106,6 +107,8 @@ void Fl_Window::draw() {
 
   if (damage() & ~FL_DAMAGE_CHILD) {	 // draw the entire thing
     draw_box(box(),0,0,w(),h(),color()); // draw box with x/y = 0
+	if (image())
+		image()->draw(0, 0, w(), h());
   }
   draw_children();
 

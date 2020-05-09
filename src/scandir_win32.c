@@ -26,10 +26,11 @@
 
 int fl_scandir(const char *dirname, struct dirent ***namelist,
 	       int (*select)(struct dirent *),
-	       int (*compar)(struct dirent **, struct dirent **)) {
+	       int (*compar)(struct dirent **, struct dirent **), int no_utf_conv) {
   int len;
   char *findIn, *d, is_dir = 0;
   WIN32_FIND_DATAW findw;
+  WIN32_FIND_DATA finda;
   HANDLE h;
   int nDir = 0, NDir = 0;
   struct dirent **dir = 0, *selectDir;
@@ -54,6 +55,11 @@ int fl_scandir(const char *dirname, struct dirent ***namelist,
     if (attr&FILE_ATTRIBUTE_DIRECTORY)
       strcpy(d, "\\*");
   }
+  if (no_utf_conv)
+  {
+	  h = FindFirstFile(findIn, &finda); /* get a handle to the first filename in the search */
+  }
+  else
   { /* Create a block to limit the scope while we find the initial "wide" filename */
      /* unsigned short * wbuf = (unsigned short*)malloc(sizeof(short) *(len + 10)); */
      /* wbuf[fl_utf2unicode(findIn, strlen(findIn), wbuf)] = 0; */
@@ -76,18 +82,35 @@ int fl_scandir(const char *dirname, struct dirent ***namelist,
     return nDir;
   }
   do {
-	int l = (int) wcslen(findw.cFileName);
-	int dstlen = l * 5 + 1;
-	selectDir=(struct dirent*)malloc(sizeof(struct dirent)+dstlen);
+	if (no_utf_conv)
+	{
+		int l = (int) strlen(finda.cFileName);
+		int dstlen = l + 2;
+		selectDir=(struct dirent*)malloc(sizeof(struct dirent)+dstlen);
 
-     /* l = fl_unicode2utf(findw.cFileName, l, selectDir->d_name); */
-	l = fl_utf8fromwc(selectDir->d_name, dstlen, findw.cFileName, l);
+		strcpy(selectDir->d_name, finda.cFileName);
 
-	selectDir->d_name[l] = 0;
-	if (findw.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-		/* Append a trailing slash to directory names... */
-		strcat(selectDir->d_name, "/");
+		if (finda.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			/* Append a trailing slash to directory names... */
+			strcat(selectDir->d_name, "/");
+		}
 	}
+	else
+	{
+		int l = (int) wcslen(findw.cFileName);
+		int dstlen = l * 5 + 1;
+		selectDir=(struct dirent*)malloc(sizeof(struct dirent)+dstlen);
+
+		 /* l = fl_unicode2utf(findw.cFileName, l, selectDir->d_name); */
+		l = fl_utf8fromwc(selectDir->d_name, dstlen, findw.cFileName, l);
+
+		selectDir->d_name[l] = 0;
+		if (findw.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			/* Append a trailing slash to directory names... */
+			strcat(selectDir->d_name, "/");
+		}
+	}
+
 	if (!select || (*select)(selectDir)) {
 		if (nDir==NDir) {
 	struct dirent **tempDir = (struct dirent **)calloc(sizeof(struct dirent*), (size_t)(NDir+33));
@@ -102,7 +125,7 @@ int fl_scandir(const char *dirname, struct dirent ***namelist,
 	} else {
 		free(selectDir);
 	}
-   } while (FindNextFileW(h, &findw));
+   } while (no_utf_conv ? FindNextFile(h, &finda) : FindNextFileW(h, &findw));
   ret = GetLastError();
   if (ret != ERROR_NO_MORE_FILES) {
     /* don't return an error code, because the dir list may still be valid

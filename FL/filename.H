@@ -56,9 +56,12 @@ FL_EXPORT const char *fl_filename_ext(const char *buf);
 FL_EXPORT char *fl_filename_setext(char *to, int tolen, const char *ext);
 FL_EXPORT int fl_filename_expand(char *to, int tolen, const char *from);
 FL_EXPORT int fl_filename_absolute(char *to, int tolen, const char *from);
+FL_EXPORT int fl_filename_absolute_ex(char *to, int tolen, const char *from, int no_utf_conv);
 FL_EXPORT int fl_filename_relative(char *to, int tolen, const char *from);
+FL_EXPORT int fl_filename_relative_ex(char *to, int tolen, const char *from, int no_utf_conv);
 FL_EXPORT int fl_filename_match(const char *name, const char *pattern);
 FL_EXPORT int fl_filename_isdir(const char *name);
+FL_EXPORT int fl_filename_isdir_ex(const char *name, int no_utf_conv);
 
 #  if defined(__cplusplus) && !defined(FL_DOXYGEN)
 /*
@@ -123,7 +126,7 @@ FL_EXPORT int fl_numericsort(struct dirent **, struct dirent **);
  */
 
 FL_EXPORT int fl_filename_list(const char *d, struct dirent ***l,
-                               Fl_File_Sort_F *s = fl_numericsort);
+                               Fl_File_Sort_F *s = fl_numericsort, int no_utf_conv = 0);
 FL_EXPORT void fl_filename_free_list(struct dirent ***l, int n);
 
 /*

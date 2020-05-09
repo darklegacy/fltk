@@ -606,6 +606,8 @@ inline void fl_draw(int angle, const char* str, int n, int x, int y) {fl_graphic
 inline void fl_rtl_draw(const char* str, int n, int x, int y) {fl_graphics_driver->rtl_draw(str,n,x,y); }
 FL_EXPORT void fl_measure(const char* str, int& x, int& y,
                           int draw_symbols = 1);
+FL_EXPORT void fl_measure(const char* str, int& x, int& y, Fl_Align align,
+                          int draw_symbols = 1);
 FL_EXPORT void fl_draw(const char* str, int x, int y, int w, int h,
                        Fl_Align align,
                        Fl_Image* img=0, int draw_symbols = 1);

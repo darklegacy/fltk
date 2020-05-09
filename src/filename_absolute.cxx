@@ -39,6 +39,11 @@ inline int isdirsep(char c) {return c=='/' || c=='\\';}
 #define isdirsep(c) ((c)=='/')
 #endif
 
+int fl_filename_absolute(char *to, int tolen, const char *from)
+{
+	return fl_filename_absolute_ex(to, tolen, from, 0);
+}
+
 /** Makes a filename absolute from a relative filename.
     \code
     #include <FL/filename.H>
@@ -53,7 +58,7 @@ inline int isdirsep(char c) {return c=='/' || c=='\\';}
     \param[in]  from relative filename
     \return 0 if no change, non zero otherwise
  */
-int fl_filename_absolute(char *to, int tolen, const char *from) {
+int fl_filename_absolute_ex(char *to, int tolen, const char *from, int no_utf_conv) {
   if (isdirsep(*from) || *from == '|'
 #if defined(WIN32) || defined(__EMX__) && !defined(__CYGWIN__)
       || from[1]==':'
@@ -67,7 +72,7 @@ int fl_filename_absolute(char *to, int tolen, const char *from) {
   char *temp = new char[tolen];
   const char *start = from;
 
-  a = fl_getcwd(temp, tolen);
+  a = fl_getcwd_ex(temp, tolen, no_utf_conv);
   if (!a) {
     strlcpy(to, from, tolen);
     delete[] temp;
@@ -106,6 +111,11 @@ int fl_filename_absolute(char *to, int tolen, const char *from) {
   return 1;
 }
 
+int fl_filename_relative(char *to, int tolen, const char *from)
+{
+	return fl_filename_relative_ex(to, tolen, from, 0);
+}
+
 /** Makes a filename relative to the current working directory.
     \code
     #include <FL/filename.H>
@@ -125,13 +135,14 @@ int fl_filename_absolute(char *to, int tolen, const char *from) {
     \return 0 if no change, non zero otherwise
  */
 int					// O - 0 if no change, 1 if changed
-fl_filename_relative(char       *to,	// O - Relative filename
-                     int        tolen,	// I - Size of "to" buffer
-                     const char *from)  // I - Absolute filename
+fl_filename_relative_ex(char       *to,	// O - Relative filename
+                        int        tolen,	// I - Size of "to" buffer
+                        const char *from,  // I - Absolute filename
+                        int no_utf_conv)
 {
   char cwd_buf[FL_PATH_MAX];	// Current directory
   // get the current directory and return if we can't
-  if (!fl_getcwd(cwd_buf, sizeof(cwd_buf))) {
+  if (!fl_getcwd_ex(cwd_buf, sizeof(cwd_buf), no_utf_conv)) {
     strlcpy(to, from, tolen);
     return 0;
   }

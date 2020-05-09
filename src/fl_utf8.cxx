@@ -452,7 +452,7 @@ char * fl_utf2mbcs(const char *s)
 
 	buf = (char*)realloc(buf, (unsigned) (l * 6 + 1));
 	l = (unsigned) wcstombs(buf, mbwbuf, (unsigned) l * 6);
-	buf[l] = 0;
+	buf[(int)l==-1?0:l] = 0;
 	return buf;
 #else
 	return (char*) s;
@@ -701,8 +701,20 @@ int fl_stat(const char* f, struct stat *b)
 
 char *fl_getcwd(char* b, int l)
 {
+	return fl_getcwd_ex(b, l, 0);
+}
+
+char *fl_getcwd_ex(char* b, int l, int no_utf_conv)
+{
 	if (b == NULL) {
 		b = (char*) malloc(l+1);
+	}
+	if (no_utf_conv) {
+#if defined(WIN32) && !defined(__CYGWIN__)
+		return _getcwd(b, l);
+#else
+		return getcwd(b, l);
+#endif
 	}
 #if defined(WIN32) && !defined(__CYGWIN__)
 		static xchar *wbuf = NULL;

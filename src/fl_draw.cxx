@@ -403,7 +403,7 @@ void fl_draw(
   fl_measure(s, wi, hi);       // returns pixel width/height of string in current font
   \endcode
 */
-void fl_measure(const char* str, int& w, int& h, int draw_symbols) {
+void fl_measure(const char* str, int& w, int& h, Fl_Align align, int draw_symbols) {
   if (!str || !*str) {w = 0; h = 0; return;}
   h = fl_height();
   const char* p;
@@ -445,7 +445,7 @@ void fl_measure(const char* str, int& w, int& h, int draw_symbols) {
   for (p = str, lines=0; p;) {
 //    e = expand(p, buf, w - symtotal, buflen, width, w != 0, draw_symbols);
     e = fl_expand_text(p, buf, MAXBUF, w - symtotal, buflen, width, 
-			w != 0, draw_symbols);
+			align, draw_symbols);
     if ((int)ceil(width) > W) W = (int)ceil(width);
     lines++;
     if (!*e || (*e == '@' && e[1] != '@' && draw_symbols)) break;
@@ -461,6 +461,10 @@ void fl_measure(const char* str, int& w, int& h, int draw_symbols) {
 
   w = W + symtotal;
   h = lines*h;
+}
+
+void fl_measure(const char* str, int& w, int& h, int draw_symbols) {
+	fl_measure(str, w, h, (Fl_Align)(w!=0), draw_symbols);
 }
 
 /**

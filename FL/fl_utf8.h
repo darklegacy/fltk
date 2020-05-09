@@ -202,6 +202,7 @@ FL_EXPORT int fl_stat( const char *path, struct stat *buffer );
 
 /* OD: Portable UTF8 aware getcwd wrapper */
 FL_EXPORT char* fl_getcwd( char *buf, int maxlen);
+FL_EXPORT char* fl_getcwd_ex( char *buf, int maxlen, int no_utf_conv);
 
 /* OD: Portable UTF8 aware fopen wrapper */
 FL_EXPORT FILE *fl_fopen(const char *f, const char *mode);

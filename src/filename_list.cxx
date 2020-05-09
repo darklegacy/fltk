@@ -30,7 +30,7 @@ extern "C" {
 #ifndef HAVE_SCANDIR
   int fl_scandir (const char *dir, dirent ***namelist,
 	          int (*select)(dirent *),
-	          int (*compar)(dirent **, dirent **));
+	          int (*compar)(dirent **, dirent **), int no_utf_conv = 0);
 #endif
 }
 
@@ -73,12 +73,12 @@ int fl_casealphasort(struct dirent **a, struct dirent **b) {
    \return the number of entries if no error, a negative value otherwise.
 */
 int fl_filename_list(const char *d, dirent ***list,
-                     Fl_File_Sort_F *sort) {
+                     Fl_File_Sort_F *sort, int no_utf_conv) {
 #if defined(WIN32) && !defined(__CYGWIN__) && !defined(HAVE_SCANDIR)
   // For Windows we have a special scandir implementation that uses
   // the Win32 "wide" functions for lookup, avoiding the code page mess
   // entirely. It also fixes up the trailing '/'.
-  return fl_scandir(d, list, 0, sort);
+  return fl_scandir(d, list, 0, sort, no_utf_conv);
 
 #else // WIN32
 
@@ -90,13 +90,18 @@ int fl_filename_list(const char *d, dirent ***list,
 #ifdef __APPLE__
   dirloc = (char *)d;
 #else
-  dirloc = (char *)malloc(dirlen + 1);
-  fl_utf8to_mb(d, dirlen, dirloc, dirlen + 1);
+  if (no_utf_conv)
+	  dirloc = (char *)d;
+  else
+  {
+	  dirloc = (char *)malloc(dirlen + 1);
+	  fl_utf8to_mb(d, dirlen, dirloc, dirlen + 1);
+  }
 #endif
 
 #ifndef HAVE_SCANDIR
   // This version is when we define our own scandir
-  int n = fl_scandir(dirloc, list, 0, sort);
+  int n = fl_scandir(dirloc, list, 0, sort, no_utf_conv);
 #elif defined(HAVE_SCANDIR_POSIX) && !defined(__APPLE__)
   // POSIX (2008) defines the comparison function like this:
   int n = scandir(dirloc, list, 0, (int(*)(const dirent **, const dirent **))sort);
@@ -143,7 +148,10 @@ int fl_filename_list(const char *d, dirent ***list,
 #ifdef __APPLE__
     newlen = len;
 #else
-    newlen = fl_utf8from_mb(NULL, 0, de->d_name, len);
+	if (no_utf_conv)
+		newlen = len;
+	else
+		newlen = fl_utf8from_mb(NULL, 0, de->d_name, len);
 #endif
     dirent *newde = (dirent*)malloc(de->d_name - (char*)de + newlen + 2); // Add space for a / and a nul
 
@@ -152,7 +160,10 @@ int fl_filename_list(const char *d, dirent ***list,
 #ifdef __APPLE__
     strcpy(newde->d_name, de->d_name);
 #else
-    fl_utf8from_mb(newde->d_name, newlen + 1, de->d_name, len);
+	if (no_utf_conv)
+		strcpy(newde->d_name, de->d_name);
+	else
+		fl_utf8from_mb(newde->d_name, newlen + 1, de->d_name, len);
 #endif
 
     // Check if dir (checks done on "old" name as we need to interact with

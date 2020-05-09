@@ -48,6 +48,7 @@ static const char *iconlabel = "?";
 static const char *message_title_default;
 Fl_Font fl_message_font_ = FL_HELVETICA;
 Fl_Fontsize fl_message_size_ = -1;
+Fl_Callback *fl_message_preshow_cb_ = NULL;
 static int enableHotspot = 1;
 #ifdef __APPLE__
 extern "C" void NSBeep(void);
@@ -240,6 +241,9 @@ static int innards(const char* fmt, va_list ap,
     button[0]->shortcut(0);
   else
     button[0]->shortcut(FL_Escape);
+
+  if (fl_message_preshow_cb_)
+	  fl_message_preshow_cb_(message_form, NULL);
 
   // set default window title, if defined and a specific title is not set
   if (!message_form->label() && message_title_default)

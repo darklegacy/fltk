@@ -61,6 +61,7 @@
 
 #ifdef WIN32
 #  include <ole2.h>
+void fl_cleanup_wndclasss(void);
 void fl_free_fonts(void);
 HBRUSH fl_brush_action(int action);
 void fl_cleanup_pens(void);
@@ -312,6 +313,18 @@ int Fl::has_timeout(Fl_Timeout_Handler cb, void *argp) {
 	This may change in the future.
 */
 void Fl::remove_timeout(Fl_Timeout_Handler cb, void *argp) {
+	// mod not part of normal FLTK, remove all timeouts if cb is NULL
+	if (!cb)
+	{
+		for (Timeout** p = &first_timeout; *p;) {
+			Timeout* t = *p;
+			*p = t->next;
+			t->next = free_timeout;
+			free_timeout = t;
+		}
+		return;
+	}
+
   for (Timeout** p = &first_timeout; *p;) {
     Timeout* t = *p;
     if (t->cb == cb && (t->arg == argp || !argp)) {
@@ -557,6 +570,8 @@ class Fl_Win32_At_Exit {
 public:
   Fl_Win32_At_Exit() { }
   ~Fl_Win32_At_Exit() {
+    Fl::remove_timeout(NULL);
+    fl_cleanup_wndclasss();
     fl_free_fonts();        // do some WIN32 cleanup
     fl_cleanup_pens();
     fl_OleUninitialize();

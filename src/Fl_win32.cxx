@@ -1446,10 +1446,11 @@ void Fl_Window::fullscreen_off_x(int X, int Y, int W, int H) {
  * we register to avoid double registration. It has the added bonus 
  * of freeing everything on application close as well.
  */
-class NameList {
+class WndClassNameList {
 public:
-  NameList() { name = (char**)malloc(sizeof(char**)); NName = 1; nName = 0; }
-  ~NameList() { 
+  WndClassNameList() { name = (char**)malloc(sizeof(char**)); NName = 1; nName = 0; }
+  //~WndClassNameList() { 
+  void Destroy() { 
     int i;
     for (i=0; i<nName; i++) free(name[i]);
     if (name) free(name); 
@@ -1468,7 +1469,8 @@ public:
     }
     return 0;
   }
-private:
+//private:
+public:
   char **name;
   int nName, NName;
 };
@@ -1481,6 +1483,9 @@ HCURSOR fl_default_cursor;
 UINT fl_wake_msg = 0;
 int fl_disable_transient_for; // secret method of removing TRANSIENT_FOR
 
+static const char* timer_class = "FLTimer";
+static WndClassNameList class_name_list;
+
 Fl_X* Fl_X::make(Fl_Window* w) {
   Fl_Group::current(0); // get rid of very common user bug: forgot end()
 
@@ -1492,7 +1497,6 @@ Fl_X* Fl_X::make(Fl_Window* w) {
     return 0L;
   }
 
-  static NameList class_name_list;
   static const char *first_class_name = 0L;
   const char *class_name = w->xclass();
   if (!class_name) class_name = first_class_name; // reuse first class name used
@@ -1690,6 +1694,30 @@ Fl_X* Fl_X::make(Fl_Window* w) {
 }
 
 
+void fl_cleanup_wndclasss(void)
+{
+	if (s_TimerWnd)
+	{
+		XDestroyWindow(fl_display, s_TimerWnd);
+		s_TimerWnd = NULL;
+	}
+	UnregisterClass(timer_class, fl_display);
+
+	//
+
+    int i;
+    for (i=0; i<class_name_list.nName; i++)
+	{
+		UnregisterClass(class_name_list.name[i], fl_display);
+
+		free(class_name_list.name[i]);
+		class_name_list.name[i] = NULL;
+	}
+	class_name_list.nName = 0;
+
+	class_name_list.Destroy();
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1745,7 +1773,6 @@ void Fl::repeat_timeout(double time, Fl_Timeout_Handler cb, void* data)
   unsigned int elapsed = (unsigned int)(time * 1000);
 
   if ( !s_TimerWnd ) {
-    const char* timer_class = "FLTimer";
     WNDCLASSEX wc;
     memset(&wc, 0, sizeof(wc));
     wc.cbSize = sizeof (wc);
@@ -1790,6 +1817,18 @@ int Fl::has_timeout(Fl_Timeout_Handler cb, void* data)
 
 void Fl::remove_timeout(Fl_Timeout_Handler cb, void* data)
 {
+	// mod not part of normal FLTK, remove all timeouts if cb is NULL
+	if (!cb)
+	{
+		int i;
+		for (i = 0;  i < win32_timer_used;  ++i) {
+			Win32Timer& t = win32_timers[i];
+			if (t.handle)
+				delete_timer(t);
+		}
+		return;
+	}
+
   int i;
   for (i = 0;  i < win32_timer_used;  ++i) {
     Win32Timer& t = win32_timers[i];

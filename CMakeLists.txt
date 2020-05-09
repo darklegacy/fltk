@@ -23,6 +23,10 @@
 project(FLTK)
 cmake_minimum_required(VERSION 2.6)
 
+find_package(zlib REQUIRED)
+find_package(png REQUIRED)
+find_package(jpeg REQUIRED)
+
 # The FLTK version
 set(FLTK_VERSION_MAJOR "1")
 set(FLTK_VERSION_MINOR "3")

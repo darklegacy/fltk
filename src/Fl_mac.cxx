@@ -2785,6 +2785,16 @@ int Fl::has_timeout(Fl_Timeout_Handler cb, void* data)
 
 void Fl::remove_timeout(Fl_Timeout_Handler cb, void* data)
 {
+	// mod not part of normal FLTK, remove all timeouts if cb is NULL
+	if (!cb)
+	{
+		for (int i = 0;  i < mac_timer_used;  ++i) {
+			MacTimeout& t = mac_timers[i];
+			delete_timer(t);
+		}
+		return;
+	}
+
    for (int i = 0;  i < mac_timer_used;  ++i) {
         MacTimeout& t = mac_timers[i];
         if (t.callback == cb  && ( t.data == data || data == NULL)) {
