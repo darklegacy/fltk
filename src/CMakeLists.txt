@@ -418,7 +418,9 @@ endif(MSVC)
 #######################################################################
 install(TARGETS fltk_SHARED fltk_forms_SHARED fltk_images_SHARED
    EXPORT fltk-install
-   DESTINATION ${PREFIX_LIB}
+   RUNTIME DESTINATION ${PREFIX_BIN}
+   LIBRARY DESTINATION ${PREFIX_LIB}
+   ARCHIVE DESTINATION ${PREFIX_LIB}
 )
 
 #######################################################################
@@ -446,7 +448,9 @@ if(OPENGL_FOUND)
 
    install(TARGETS fltk_gl_SHARED
       EXPORT fltk-install
-      DESTINATION ${PREFIX_LIB}
+      RUNTIME DESTINATION ${PREFIX_BIN}
+      LIBRARY DESTINATION ${PREFIX_LIB}
+      ARCHIVE DESTINATION ${PREFIX_LIB}
    )
 endif(OPENGL_FOUND)
 
